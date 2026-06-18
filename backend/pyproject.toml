@@ -1,0 +1,49 @@
+[project]
+name = "omicsai"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anndata>=0.12.16",
+    "antspyx>=0.5.3",
+    "cellpose>=4.1.1",
+    "csbdeep>=0.8.2",
+    "fastapi>=0.136.3",
+    "huggingface-hub>=1.19.0",
+    "numpy>=2.4.6",
+    "pandas>=2.3.3",
+    "pyarrow>=24.0.0",
+    "requests>=2.34.2",
+    "scanpy>=1.12.1",
+    "scipy>=1.17.1",
+    "shapely>=2.1.2",
+    "spatialdata>=0.7.3",
+    "sqlalchemy>=2.0.50",
+    "stardist>=0.9.1",
+    "tifffile>=2026.6.1",
+    "torch==2.11.0",
+    "torchvision==0.26.0",
+    "torch-geometric>=2.8.0",
+    "tqdm>=4.68.1",
+    "uvicorn>=0.48.0",
+    "radiomics>=0.1",
+    "simpleitk>=2.5.5",
+    "pyradiomics",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128" }]
+torchvision = [{ index = "pytorch-cu128" }]
+torchaudio = [{ index = "pytorch-cu128" }]
+pyradiomics = { git = "https://github.com/AIM-Harvard/pyradiomics.git" }
+
+[tool.uv]
+environments = [
+    "sys_platform == 'win32'",
+]
