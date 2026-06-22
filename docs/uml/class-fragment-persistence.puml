@@ -1,0 +1,33 @@
+@startuml
+skinparam backgroundColor transparent
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "Persistence Layer" {
+  class User
+  class Project
+  class XeniumSlide
+  class MLModel
+  class ModelPreset
+  class AnalysisReport
+  class AuditLog
+  class DatabaseService
+}
+
+User "1" --> "0..*" Project
+User "1" --> "0..*" AnalysisReport
+User "1" --> "0..*" AuditLog
+Project "1" --> "0..*" XeniumSlide
+XeniumSlide "1" --> "0..*" AnalysisReport
+ModelPreset "1" --> "0..*" AnalysisReport
+ModelPreset --> MLModel : expert_model
+ModelPreset --> MLModel : spatial_model
+
+DatabaseService ..> User
+DatabaseService ..> Project
+DatabaseService ..> XeniumSlide
+DatabaseService ..> MLModel
+DatabaseService ..> ModelPreset
+DatabaseService ..> AnalysisReport
+DatabaseService ..> AuditLog
+@enduml

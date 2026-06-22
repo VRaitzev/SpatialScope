@@ -1,0 +1,75 @@
+@startuml
+skinparam backgroundColor #ffffff
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontColor #0f172a
+skinparam sequence {
+  ArrowColor #1e293b
+  LifeLineBorderColor #334155
+  LifeLineBackgroundColor #f8fafc
+  ParticipantBorderColor #1e293b
+  ParticipantBackgroundColor #f8fafc
+  ParticipantFontColor #0f172a
+  ActorBorderColor #1e293b
+  ActorBackgroundColor #f8fafc
+  ActorFontColor #0f172a
+  BoxBorderColor #334155
+  BoxBackgroundColor #f8fafc
+  GroupBorderColor #334155
+  GroupBackgroundColor #f8fafc
+  GroupFontColor #0f172a
+  DividerBorderColor #334155
+  DividerBackgroundColor #e2e8f0
+  DividerFontColor #0f172a
+  ReferenceBorderColor #334155
+  ReferenceBackgroundColor #f8fafc
+  ReferenceFontColor #0f172a
+  MessageFontColor #0f172a
+  MessageAlign center
+  ResponseMessageBelowArrow true
+}
+skinparam defaultFontSize 17
+skinparam ParticipantPadding 14
+skinparam BoxPadding 8
+skinparam sequenceArrowThickness 2
+skinparam sequenceMessageAlign direction
+skinparam maxMessageSize 28
+hide footbox
+actor "Исследователь" as R
+participant "Frontend" as FE
+participant "API /training/start" as API
+participant "Orchestrator" as ORCH
+participant "WSI Loader" as WSI
+participant "Boundary Adapter" as BOUND
+participant "Expert Models" as EXP
+participant "Graph Dataset" as DATASET
+participant "Train Pipeline" as TRAIN
+participant "Spatial GNN" as GNN
+participant "DB Service" as DB
+
+R -> FE : Задаёт training ROI и параметры обучения
+FE -> API : POST /api/training/start
+API -> ORCH : start_background_training(...)
+ORCH -> ORCH : jobs_registry[job_id] = running
+ORCH -> DB : update_slide_status(slide_id, processing)
+ORCH -> DB : log_action(... START_TRAINING ...)
+ORCH --> API : job_id
+API --> FE : success + job_id
+
+loop background worker
+  ORCH -> WSI : load_region(...)
+  ORCH -> BOUND : load_boundaries(...)
+  ORCH -> EXP : predict(...)
+  EXP --> ORCH : WSICellFeatureRegistry
+end
+
+ORCH -> DATASET : new XeniumGraphDataset(registries, target_gene_names, all_gene_names, expert_key)
+ORCH -> TRAIN : new SpatialTrainPipeline(dataset, GNN, optimizer,...)
+TRAIN -> TRAIN : data_prepare()
+TRAIN -> GNN : train forward/backward epochs
+TRAIN -> TRAIN : _save_checkpoint()
+TRAIN --> ORCH : training complete
+ORCH -> DB : update_slide_status(slide_id, ready)
+ORCH -> DB : log_action(... TRAINING_FINISHED ...)
+ORCH -> ORCH : jobs_registry[job_id] = success
+@enduml

@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 from shapely.geometry import Polygon
 from scipy.spatial import KDTree
-from tqdm import tqdm  # <- Наш верный спутник для отслеживания прогресса
+from tqdm import tqdm  
 
 from app.core.ml_models.wsi_models.expert_models.AbstractExpertModel import AbstractExpertModel
 from app.core.schemes.Cells import ExpertModelManifest, FeatureMeta, WSICellFeatureRegistry, CellFeaturePassport
@@ -49,7 +49,6 @@ class GeometricMorphologyExpert(AbstractExpertModel):
         """
         Расчет геометрических фич с дисковым кэшированием.
         """
-        # 1. ПРОВЕРЯЕМ ДИСКОВЫЙ КЭШ
         cache_path = os.path.join(self.cache_dir, f"{patch_id}_geometry.pkl")
         if os.path.exists(cache_path):
             print(f"        💾 [Кэш] {patch_id} (Геометрия) добавлен из файла.")
@@ -60,7 +59,6 @@ class GeometricMorphologyExpert(AbstractExpertModel):
         if not instances:
             return WSICellFeatureRegistry(slide_id=slide_id, cells=[], models_manifests=[self.manifest])
 
-        # --- Шаг 1: Расчет локальной плотности через KDTree ---
         centroids = [cell.centroid for cell in instances]
         centroids_np = np.array(centroids, dtype=np.float32)
         num_cells = len(instances)
@@ -78,41 +76,39 @@ class GeometricMorphologyExpert(AbstractExpertModel):
                 mean_knn_distances = np.mean(neighbor_distances, axis=1)
                 density_indices = 1.0 / (mean_knn_distances + 1e-5)
 
-        # --- Шаг 2: Расчет морфологии через Shapely с TQDM прогрессом ---
         cells_passports = []
         
         for idx, cell in enumerate(tqdm(instances, desc=f"        📐 Расчет морфологии для {patch_id}", leave=False)):
-            points = cell.polygon_points
-            
+            try:
+                poly = cell.polygon.as_shapely()
+            except Exception as e:
+                continue
+
             area = 0.0
             perimeter = 0.0
             aspect_ratio = 1.0
             solidity = 1.0
-            
-            if points and len(points) >= 3:
-                try:
-                    poly = Polygon(points)
-                    if poly.is_valid and poly.area > 0:
-                        area = poly.area
-                        perimeter = poly.length
-                        
-                        convex_area = poly.convex_hull.area
-                        if convex_area > 0:
-                            solidity = area / convex_area
-                            
-                        rotated_rect = poly.minimum_rotated_rectangle
-                        if rotated_rect.geom_type == 'Polygon':
-                            rx, ry = rotated_rect.exterior.coords.xy
-                            side_1 = float(np.hypot(rx[0] - rx[1], ry[0] - ry[1]))
-                            side_2 = float(np.hypot(rx[1] - rx[2], ry[1] - ry[2]))
-                            
-                            major_axis = max(side_1, side_2)
-                            minor_axis = min(side_1, side_2)
-                            
-                            if minor_axis > 0:
-                                aspect_ratio = major_axis / minor_axis
-                except Exception:
-                    pass
+
+            if poly.is_valid and poly.area > 0:
+                area = poly.area
+                perimeter = poly.length
+                
+                convex_area = poly.convex_hull.area
+                if convex_area > 0:
+                    solidity = area / convex_area
+                    
+                rotated_rect = poly.minimum_rotated_rectangle
+                if rotated_rect.geom_type == 'Polygon':
+                    rx, ry = rotated_rect.exterior.coords.xy
+                    side_1 = float(np.hypot(rx[0] - rx[1], ry[0] - ry[1]))
+                    side_2 = float(np.hypot(rx[1] - rx[2], ry[1] - ry[2]))
+                    
+                    major_axis = max(side_1, side_2)
+                    minor_axis = min(side_1, side_2)
+                    
+                    if minor_axis > 0:
+                        aspect_ratio = major_axis / minor_axis
+
 
             feature_vector = [
                 float(area),
@@ -123,7 +119,6 @@ class GeometricMorphologyExpert(AbstractExpertModel):
                 float(density_indices[idx])
             ]
 
-            # ИСПРАВЛЕНО: Синхронизировали формат ключа cell_id с остальными экспертами!
             cells_passports.append(CellFeaturePassport(
                 cell_id=f"cell_{cell.centroid[0]}_{cell.centroid[1]}",
                 slide_id=slide_id,
@@ -131,11 +126,14 @@ class GeometricMorphologyExpert(AbstractExpertModel):
                 expert_embeddings={self.EXPERT_KEY: feature_vector}
             ))
 
-        # --- Шаг 3: Упаковка и сохранение кэша ---
         registry = WSICellFeatureRegistry(
             slide_id=slide_id,
+            x_wsi=0.0,
+            y_wsi=0.0,
+            x_local=0.0,
+            y_local=0.0,
             cells=cells_passports,
-            models_manifests=[self.manifest]
+            models_manifests=[self.manifest],
         )
 
         with open(cache_path, 'wb') as f:

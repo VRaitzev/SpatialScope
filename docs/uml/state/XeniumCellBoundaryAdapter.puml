@@ -1,0 +1,10 @@
+@startuml
+[*] --> Ready
+Ready --> ManifestExposed : manifest
+ManifestExposed --> Ready
+Ready --> PatchCellsCollected : load_boundaries() / get_cells_in_region()
+PatchCellsCollected --> GeneVectorsAttached : get_gene_vector()
+GeneVectorsAttached --> CoordinatesShifted : patch-local coordinates computed
+CoordinatesShifted --> SegmentationBuilt : SegmentationContainer returned
+SegmentationBuilt --> Ready
+@enduml

@@ -1,0 +1,13 @@
+@startuml
+[*] --> Idle
+Idle --> SessionOpened : _execute()
+SessionOpened --> Reading : get_* operation
+SessionOpened --> Writing : create_* / update_* / log_action()
+Reading --> Committed : success
+Writing --> Committed : success
+Reading --> RolledBack : exception
+Writing --> RolledBack : exception
+Committed --> SessionClosed : session.close()
+RolledBack --> SessionClosed : session.close()
+SessionClosed --> Idle
+@enduml

@@ -1,0 +1,32 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 20
+skinparam ranksep 24
+hide empty members
+
+package "Pipelines" {
+  abstract class AbstractTrainPipeline
+  class SpatialTrainPipeline
+}
+
+package "Models" {
+  abstract class AbstractExpertModel
+  class EfficientNetExpertAdapter
+  class RadiomicsExpertAdapter
+  class GeometricMorphologyExpert
+  abstract class AbstractSpatialSpotModel
+  class TranscriptomicsGNN
+  class SpatialGNNAdapter
+}
+
+AbstractTrainPipeline <|-- SpatialTrainPipeline
+AbstractExpertModel <|-- EfficientNetExpertAdapter
+AbstractExpertModel <|-- RadiomicsExpertAdapter
+AbstractExpertModel <|-- GeometricMorphologyExpert
+AbstractSpatialSpotModel <|-- SpatialGNNAdapter
+SpatialGNNAdapter *-- TranscriptomicsGNN
+SpatialTrainPipeline --> SpatialGNNAdapter
+@enduml

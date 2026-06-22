@@ -1,0 +1,7 @@
+@startuml
+[*] --> Declared
+Declared --> RegisteredInRegistry : register_expert() / register_spatial_model()
+RegisteredInRegistry --> BoundToPreset : create_preset()
+BoundToPreset --> LoadedForExecution : get_models_for_preset()
+LoadedForExecution --> BoundToPreset : inference or training finished
+@enduml

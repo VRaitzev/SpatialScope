@@ -1,0 +1,87 @@
+@startuml
+hide circle
+skinparam backgroundColor transparent
+skinparam linetype ortho
+skinparam roundcorner 12
+
+entity "users" as User {
+  * id : string <<PK>>
+  --
+  email : string <<UNIQUE>>
+  name : string
+  password_hash : string
+  role : string
+}
+
+entity "projects" as Project {
+  * id : string <<PK>>
+  --
+  user_id : string <<FK users.id>>
+  name : string
+  description : string
+  created_at : datetime
+}
+
+entity "xenium_slides" as XeniumSlide {
+  * id : string <<PK>>
+  --
+  project_id : string <<FK projects.id>>
+  patient_name : string
+  slide_tiff_path : string
+  cells_parquet_path : string
+  matrix_hdf5_path : string
+  slide_metadata : json
+  status : string
+  created_at : datetime
+}
+
+entity "ml_models" as MLModel {
+  * id : string <<PK>>
+  --
+  name : string
+  model_type : string
+  model_key : string
+  weights_path : string
+  manifest : json
+  created_at : datetime
+}
+
+entity "model_presets" as ModelPreset {
+  * id : string <<PK>>
+  --
+  name : string
+  description : string
+  expert_model_id : string <<FK ml_models.id>>
+  spatial_model_id : string <<FK ml_models.id>>
+  created_at : datetime
+}
+
+entity "analysis_reports" as AnalysisReport {
+  * id : string <<PK>>
+  --
+  user_id : string <<FK users.id>>
+  slide_id : string <<FK xenium_slides.id>>
+  preset_id : string <<FK model_presets.id>>
+  roi_coordinates : json
+  predicted_expression_data : json
+  created_at : datetime
+}
+
+entity "audit_logs" as AuditLog {
+  * id : integer <<PK>>
+  --
+  user_id : string <<FK users.id, NULL>>
+  action : string
+  timestamp : datetime
+  ip_address : string
+}
+
+User ||--o{ Project : owns
+Project ||--o{ XeniumSlide : contains
+XeniumSlide ||--o{ AnalysisReport : produces
+User ||--o{ AnalysisReport : creates
+User ||--o{ AuditLog : triggers
+ModelPreset ||--o{ AnalysisReport : used_in
+MLModel ||--o{ ModelPreset : expert_model
+MLModel ||--o{ ModelPreset : spatial_model
+@enduml

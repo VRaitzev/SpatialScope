@@ -43,7 +43,6 @@ class XeniumGenePanelLoader:
         print(f"✅ Матрица {self.matrix.shape} (клетки x гены) загружена. "
               f"Всего клеток: {len(self.cell_ids)}")
 
-    # === МЕТОД ДОЛЖЕН БЫТЬ НА УРОВНЕ КЛАССА (отступ слева) ===
     def get_gene_vector(self, cell_id) -> Optional[np.ndarray]:
         if cell_id is None:
             return None
@@ -53,7 +52,6 @@ class XeniumGenePanelLoader:
         else:
             cid_str = str(cell_id).strip()
         
-        # Убираем возможную обёртку b''
         if cid_str.startswith("b'") and cid_str.endswith("'"):
             cid_str = cid_str[2:-1]
         

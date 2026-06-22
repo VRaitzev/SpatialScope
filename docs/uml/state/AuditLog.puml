@@ -1,0 +1,6 @@
+@startuml
+[*] --> Created
+Created --> Persisted : log_action()
+Persisted --> AvailableForAudit : audit history requested
+AvailableForAudit --> AvailableForAudit : next audit query
+@enduml

@@ -1,0 +1,43 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #2c3e50
+  ArrowColor #34495e
+  FontColor #2c3e50
+}
+skinparam actor {
+  BorderColor #2c3e50
+  BackgroundColor #ecf0f1
+  FontColor #2c3e50
+}
+
+actor "Clinician" as Clinician
+actor "Researcher" as Researcher
+actor "Administrator" as Admin
+
+rectangle "SpatialScope — Отчёты и интерпретация" {
+  usecase "Просмотреть отчёты\nпо слайду" as UC_ViewSlideReports
+  usecase "Открыть отчёт" as UC_OpenReport
+  usecase "Интерпретировать отчёт" as UC_InterpretReport
+  usecase "Экспортировать отчёт\nв JSON" as UC_ExportReport
+}
+
+Clinician --> UC_ViewSlideReports
+Clinician --> UC_OpenReport
+Clinician --> UC_InterpretReport
+Clinician --> UC_ExportReport
+
+Researcher --> UC_ViewSlideReports
+Researcher --> UC_OpenReport
+Researcher --> UC_InterpretReport
+Researcher --> UC_ExportReport
+
+Admin --> UC_ViewSlideReports
+Admin --> UC_OpenReport
+Admin --> UC_InterpretReport
+Admin --> UC_ExportReport
+@enduml

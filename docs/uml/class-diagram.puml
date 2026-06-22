@@ -1,0 +1,168 @@
+@startuml
+skinparam backgroundColor transparent
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "Persistence Layer" {
+  class User
+  class Project
+  class XeniumSlide
+  class MLModel
+  class ModelPreset
+  class AnalysisReport
+  class AuditLog
+  class DatabaseService
+}
+
+package "Registry & Orchestration" {
+  abstract class AbstractModelRegistry
+  class PresetConfiguration
+  class ModelPresetRegistry
+
+  class BaseSpatialOrchestrator
+  class XeniumSystemOrchestrator
+}
+
+package "Interpretability" {
+  class FeatureAttribution
+  class CellAttributionMap
+  class SpatialAttributionMap
+  class InterpretationResult
+  abstract class AbstractModelInterpreter
+  class EfficientNetInterpreter
+  class GNNInterpreter
+  class InterpretationService
+}
+
+package "Loaders" {
+  abstract class AbstractTranscriptomicsLoader
+  class XeniumGenePanelLoader
+
+  abstract class AbstractWSILoader
+  class XeniumWSILoader
+
+  abstract class AbstractCellBoundaryLoader
+  class XeniumCellBoundaryAdapter
+
+  class XeniumGraphDataset
+}
+
+package "Pipelines" {
+  abstract class AbstractTrainPipeline
+  class SpatialTrainPipeline
+}
+
+package "Models" {
+  abstract class AbstractExpertModel
+  class EfficientNetExpertAdapter
+  class RadiomicsExpertAdapter
+  class GeometricMorphologyExpert
+
+  abstract class AbstractSpatialSpotModel
+  class TranscriptomicsGNN
+  class SpatialGNNAdapter
+}
+
+package "Data Contracts" {
+  class FeatureMeta
+  class ExpertModelManifest
+  class CellFeatureValue
+  class CellFeaturePassport
+  class WSICellFeatureRegistry
+  class SpotExpressionTarget
+  class SpotExpressionPrediction
+  class RegionalPredictionOutput
+
+  class PolygonModel
+  class SegmentationFeatureMeta
+  class SegmentationModelManifest
+  class SegmentationFeatureValue
+  class ImageMetadata
+  class SegmentationInput
+  class SegmentationCellInstance
+  class SegmentationContainer
+
+  class WSIUploadRequest
+  class WSILevelMetadata
+  class WSIContainer
+  class WSIRegionContainer
+}
+
+AbstractModelRegistry <|-- ModelPresetRegistry
+BaseSpatialOrchestrator <|-- XeniumSystemOrchestrator
+AbstractModelInterpreter <|-- EfficientNetInterpreter
+AbstractModelInterpreter <|-- GNNInterpreter
+AbstractTranscriptomicsLoader <|-- XeniumGenePanelLoader
+AbstractWSILoader <|-- XeniumWSILoader
+AbstractCellBoundaryLoader <|-- XeniumCellBoundaryAdapter
+AbstractTrainPipeline <|-- SpatialTrainPipeline
+AbstractExpertModel <|-- EfficientNetExpertAdapter
+AbstractExpertModel <|-- RadiomicsExpertAdapter
+AbstractExpertModel <|-- GeometricMorphologyExpert
+AbstractSpatialSpotModel <|-- SpatialGNNAdapter
+
+SpatialGNNAdapter *-- TranscriptomicsGNN
+ModelPresetRegistry *-- PresetConfiguration
+XeniumSystemOrchestrator --> DatabaseService
+XeniumSystemOrchestrator --> ModelPresetRegistry
+XeniumSystemOrchestrator --> InterpretationService
+XeniumSystemOrchestrator --> XeniumWSILoader
+XeniumSystemOrchestrator --> XeniumGenePanelLoader
+XeniumSystemOrchestrator --> XeniumCellBoundaryAdapter
+XeniumSystemOrchestrator --> SpatialTrainPipeline
+XeniumSystemOrchestrator --> XeniumGraphDataset
+
+InterpretationService --> ModelPresetRegistry
+InterpretationService --> EfficientNetInterpreter
+InterpretationService --> GNNInterpreter
+EfficientNetInterpreter --> EfficientNetExpertAdapter
+GNNInterpreter --> SpatialGNNAdapter
+
+XeniumCellBoundaryAdapter --> XeniumWSILoader
+XeniumCellBoundaryAdapter --> XeniumGenePanelLoader
+SpatialTrainPipeline --> SpatialGNNAdapter
+XeniumGraphDataset --> WSICellFeatureRegistry
+
+User "1" --> "0..*" Project
+User "1" --> "0..*" AnalysisReport
+User "1" --> "0..*" AuditLog
+Project "1" --> "0..*" XeniumSlide
+XeniumSlide "1" --> "0..*" AnalysisReport
+ModelPreset "1" --> "0..*" AnalysisReport
+ModelPreset --> MLModel : expert_model
+ModelPreset --> MLModel : spatial_model
+
+DatabaseService ..> User
+DatabaseService ..> Project
+DatabaseService ..> XeniumSlide
+DatabaseService ..> MLModel
+DatabaseService ..> ModelPreset
+DatabaseService ..> AnalysisReport
+DatabaseService ..> AuditLog
+
+ExpertModelManifest *-- FeatureMeta
+CellFeaturePassport *-- SegmentationCellInstance
+CellFeaturePassport *-- CellFeatureValue
+WSICellFeatureRegistry *-- ExpertModelManifest
+WSICellFeatureRegistry *-- CellFeaturePassport
+RegionalPredictionOutput *-- SpotExpressionPrediction
+SegmentationModelManifest *-- SegmentationFeatureMeta
+SegmentationInput --> ImageMetadata
+SegmentationCellInstance *-- PolygonModel
+SegmentationCellInstance *-- SegmentationFeatureValue
+SegmentationContainer *-- SegmentationCellInstance
+WSIContainer *-- WSILevelMetadata
+AbstractWSILoader ..> WSIContainer
+AbstractWSILoader ..> WSIRegionContainer
+AbstractCellBoundaryLoader ..> WSIRegionContainer
+AbstractCellBoundaryLoader ..> SegmentationContainer
+AbstractExpertModel ..> SegmentationContainer
+AbstractExpertModel ..> WSICellFeatureRegistry
+AbstractSpatialSpotModel ..> WSICellFeatureRegistry
+AbstractSpatialSpotModel ..> SpotExpressionTarget
+AbstractSpatialSpotModel ..> RegionalPredictionOutput
+AbstractModelInterpreter ..> InterpretationResult
+InterpretationResult *-- FeatureAttribution
+InterpretationResult *-- CellAttributionMap
+InterpretationResult *-- SpatialAttributionMap
+@enduml

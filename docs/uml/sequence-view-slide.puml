@@ -1,0 +1,76 @@
+@startuml
+skinparam backgroundColor #ffffff
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontColor #0f172a
+skinparam sequence {
+  ArrowColor #1e293b
+  LifeLineBorderColor #334155
+  LifeLineBackgroundColor #f8fafc
+  ParticipantBorderColor #1e293b
+  ParticipantBackgroundColor #f8fafc
+  ParticipantFontColor #0f172a
+  ActorBorderColor #1e293b
+  ActorBackgroundColor #f8fafc
+  ActorFontColor #0f172a
+  BoxBorderColor #334155
+  BoxBackgroundColor #f8fafc
+  GroupBorderColor #334155
+  GroupBackgroundColor #f8fafc
+  GroupFontColor #0f172a
+  DividerBorderColor #334155
+  DividerBackgroundColor #e2e8f0
+  DividerFontColor #0f172a
+  ReferenceBorderColor #334155
+  ReferenceBackgroundColor #f8fafc
+  ReferenceFontColor #0f172a
+  MessageFontColor #0f172a
+  MessageAlign center
+  ResponseMessageBelowArrow true
+}
+skinparam defaultFontSize 18
+skinparam ParticipantPadding 18
+skinparam BoxPadding 10
+skinparam sequenceArrowThickness 2
+skinparam sequenceMessageAlign direction
+skinparam maxMessageSize 30
+hide footbox
+actor "Клиницист" as C
+participant "Frontend" as FE
+participant "API /slides/{id}" as META
+participant "API /slides/{id}/image" as IMG
+participant "API /slides/{id}/patch" as PATCH
+participant "Orchestrator" as ORCH
+participant "WSI Loader" as WSI
+participant "Filesystem" as FS
+
+C -> FE : Открывает страницу слайда
+FE -> META : GET /api/slides/{slide_id}
+META -> ORCH : get_slide_metadata(slide_id)
+ORCH --> META : metadata + status + tiff_path
+META --> FE : success + metadata
+
+FE -> IMG : GET /api/slides/{slide_id}/image
+IMG -> ORCH : get_slide_metadata(slide_id)
+ORCH --> IMG : tiff_path
+IMG -> ORCH : _ensure_slide_is_cached(slide_id)
+ORCH --> IMG : wsi_loader
+IMG -> FS : Проверка наличия TIFF
+FS --> IMG : Файл доступен
+IMG -> WSI : build_thumbnail_bytes(tiff_path)
+WSI --> IMG : JPEG thumbnail
+IMG --> FE : Response(image/jpeg)
+
+opt интерактивная навигация по ROI
+  FE -> PATCH : GET /api/slides/{slide_id}/patch?x,y,width,height
+  PATCH -> ORCH : get_slide_metadata(slide_id)
+  ORCH --> PATCH : tiff_path
+  PATCH -> ORCH : _ensure_slide_is_cached(slide_id)
+  ORCH --> PATCH : wsi_loader
+  PATCH -> WSI : build_patch_bytes(tiff_path, x, y, width, height)
+  WSI --> PATCH : JPEG patch
+  PATCH --> FE : Response(image/jpeg)
+end
+
+FE --> C : Отображение метаданных, preview и ROI-областей
+@enduml

@@ -1,0 +1,33 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 18
+skinparam ranksep 22
+hide empty members
+
+package "Data Contracts" {
+  class FeatureMeta
+  class ExpertModelManifest
+  class CellFeatureValue
+  class CellFeaturePassport
+  class WSICellFeatureRegistry
+  class PolygonModel
+  class SegmentationFeatureMeta
+  class SegmentationModelManifest
+  class SegmentationFeatureValue
+  class SegmentationCellInstance
+  class SegmentationContainer
+}
+
+ExpertModelManifest *-- FeatureMeta
+CellFeaturePassport *-- SegmentationCellInstance
+CellFeaturePassport *-- CellFeatureValue
+WSICellFeatureRegistry *-- ExpertModelManifest
+WSICellFeatureRegistry *-- CellFeaturePassport
+SegmentationModelManifest *-- SegmentationFeatureMeta
+SegmentationCellInstance *-- PolygonModel
+SegmentationCellInstance *-- SegmentationFeatureValue
+SegmentationContainer *-- SegmentationCellInstance
+@enduml

@@ -1,0 +1,45 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #2c3e50
+  ArrowColor #34495e
+  FontColor #2c3e50
+}
+skinparam actor {
+  BorderColor #2c3e50
+  BackgroundColor #ecf0f1
+  FontColor #2c3e50
+}
+
+actor "Clinician" as Clinician
+actor "Researcher" as Researcher
+actor "Administrator" as Admin
+
+rectangle "SpatialScope — Проекты и слайды" {
+  usecase "Просмотреть проекты" as UC_ViewProjects
+  usecase "Создать проект" as UC_CreateProject
+  usecase "Зарегистрировать\nXenium-слайд" as UC_RegisterSlide
+  usecase "Просмотреть метаданные\nслайда" as UC_ViewSlideMeta
+  usecase "Открыть изображение\nслайда" as UC_OpenSlideImage
+}
+
+Clinician --> UC_ViewProjects
+Clinician --> UC_ViewSlideMeta
+Clinician --> UC_OpenSlideImage
+
+Researcher --> UC_ViewProjects
+Researcher --> UC_CreateProject
+Researcher --> UC_RegisterSlide
+Researcher --> UC_ViewSlideMeta
+Researcher --> UC_OpenSlideImage
+
+Admin --> UC_ViewProjects
+Admin --> UC_CreateProject
+Admin --> UC_RegisterSlide
+Admin --> UC_ViewSlideMeta
+Admin --> UC_OpenSlideImage
+@enduml

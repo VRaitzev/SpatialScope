@@ -1,0 +1,13 @@
+@startuml
+[*] --> Idle
+Idle --> PatchInterpreting : interpret_patch()
+Idle --> ReportInterpreting : interpret_saved_report()
+PatchInterpreting --> EfficientNetPass : expert interpreter available
+PatchInterpreting --> GNNPass : GNN interpreter available
+ReportInterpreting --> EfficientNetPass : expert attribution required
+ReportInterpreting --> GNNPass : spatial attribution required
+EfficientNetPass --> MergeResults
+GNNPass --> MergeResults
+MergeResults --> Returned
+Returned --> Idle
+@enduml

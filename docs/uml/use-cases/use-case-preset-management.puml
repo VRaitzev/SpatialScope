@@ -1,0 +1,14 @@
+@startuml
+left to right direction
+actor Administrator
+actor Researcher
+actor Clinician
+rectangle SpatialScope {
+  usecase "Просмотреть список пресетов" as UC1
+  usecase "Активировать пресет" as UC2
+}
+Administrator --> UC1
+Researcher --> UC1
+Clinician --> UC1
+Administrator --> UC2
+@enduml

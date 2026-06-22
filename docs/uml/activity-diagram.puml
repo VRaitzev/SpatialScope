@@ -1,0 +1,33 @@
+@startuml
+start
+:Пользователь проходит аутентификацию;
+:Frontend получает роль и открывает dashboard;
+if (Нужно зарегистрировать слайд?) then (Да)
+  :Researcher/Admin отправляет пути к TIFF, Parquet, HDF5;
+  :XeniumSystemOrchestrator создаёт XeniumGenePanelLoader;
+  :XeniumSystemOrchestrator создаёт XeniumWSILoader;
+  :XeniumSystemOrchestrator создаёт XeniumCellBoundaryAdapter;
+  :Загружаются metadata слайда и инициализируется slides_cache;
+  :Слайд регистрируется в БД;
+endif
+:Пользователь открывает слайд;
+:Frontend получает metadata, preview и ROI patch-представления;
+if (Выбран режим инференса?) then (Да)
+  :Выбор ROI и активного пресета;
+  :ModelPresetRegistry разрешает активные модели;
+  :Извлечение patch через XeniumWSILoader;
+  :Загрузка границ клеток через XeniumCellBoundaryAdapter;
+  :Извлечение экспертных признаков concrete expert adapter;
+  :Прогон SpatialGNNAdapter;
+  :Построение интерпретации через InterpretationService;
+  :Сохранение AnalysisReport и AuditLog;
+else (Нет)
+  :Выбор training ROI и гиперпараметров;
+  :Сбор WSICellFeatureRegistry по патчам;
+  :Формирование XeniumGraphDataset;
+  :Запуск SpatialTrainPipeline;
+  :Сохранение checkpoint и обновление статусов;
+endif
+:Просмотр, интерпретация и экспорт отчёта;
+stop
+@enduml

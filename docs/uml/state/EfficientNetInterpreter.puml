@@ -1,0 +1,9 @@
+@startuml
+[*] --> Ready
+Ready --> HooksRegistered : interpret()
+HooksRegistered --> ForwardExecuted : feature_extractor forward
+ForwardExecuted --> BackwardExecuted : score.backward()
+BackwardExecuted --> CAMBuilt : GradCAM map computed
+CAMBuilt --> ResultBuilt : InterpretationResult
+ResultBuilt --> Ready
+@enduml

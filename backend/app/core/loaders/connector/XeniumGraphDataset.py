@@ -17,7 +17,7 @@ class XeniumGraphDataset(Dataset):
         target_gene_names: List[str],
         all_gene_names: List[str] = None,
         expert_key: str = "EfficientNetExpert",
-        min_cells_per_graph: int = 5  # <- НОВЫЙ ПАРАМЕТР: минимальное число клеток для графа
+        min_cells_per_graph: int = 5  
     ):
         self.registries = registries
         self.target_gene_names = target_gene_names
@@ -26,7 +26,6 @@ class XeniumGraphDataset(Dataset):
         self.min_cells_per_graph = min_cells_per_graph
         self._precomputed_graphs = []
         
-        # Индексация для быстрого поиска гена в массиве
         self.gene_to_idx = {name: idx for idx, name in enumerate(all_gene_names)} if all_gene_names else {}
         
         print(f"⚙️ [Dataset Init] Режим: {expert_key} | Целевых генов: {len(target_gene_names)}")
@@ -39,13 +38,11 @@ class XeniumGraphDataset(Dataset):
                 
             num_cells = len(registry.cells)
             
-            # Пропускаем слишком маленькие регионы
             if num_cells < self.min_cells_per_graph:
                 print(f"⚠️ [Dataset] Регистр #{idx} содержит только {num_cells} клеток (меньше {self.min_cells_per_graph}) — пропускаем")
                 continue
                 
             try:
-                # 1. Топология графа (Делоне)
                 coords = np.array([c.segmentation_data.centroid for c in registry.cells], dtype=np.float32)
                 
                 edges = set()
@@ -58,19 +55,15 @@ class XeniumGraphDataset(Dataset):
                                 edges.add((u, v))  
                                 edges.add((v, u))  
                 
-                # ИСПРАВЛЕНО: если рёбер нет — добавляем минимальные (self-loops)
                 if edges:
                     edge_index = torch.tensor(list(edges), dtype=torch.long).t().contiguous()
                 else:
-                    # Создаем базовые self-loops для каждой клетки
                     edge_index = torch.tensor([[i, i] for i in range(num_cells)], dtype=torch.long).t().contiguous()
                     
                 edge_index, _ = add_self_loops(edge_index, num_nodes=num_cells)
 
-                # 2. Матрица признаков X
                 x_features = []
                 
-                # Определяем целевую размерность эмбеддинга
                 target_dim = None
                 for c in registry.cells:
                     if self.expert_key in c.expert_embeddings:
@@ -84,7 +77,6 @@ class XeniumGraphDataset(Dataset):
                     target_dim = 100
                     print(f"⚠️ [Dataset] Эмбеддинги для {self.expert_key} не найдены, использую размерность {target_dim}")
 
-                # Сборка фич
                 for c in registry.cells:
                     if self.expert_key not in c.expert_embeddings:
                         feat = [0.0] * target_dim
@@ -108,21 +100,17 @@ class XeniumGraphDataset(Dataset):
                     
                 x_tensor = torch.tensor(x_features, dtype=torch.float)
 
-                # 3. Матрица таргетов Y (ИСПРАВЛЕНО: более надёжная обработка)
                 y_features = []
                 for c in registry.cells:
-                    # ИСПРАВЛЕНО: безопасное извлечение данных
                     cell_genes_data = None
                     if hasattr(c.segmentation_data, 'features') and c.segmentation_data.features:
                         features_dict = c.segmentation_data.features
                         if isinstance(features_dict, dict) and "xenium_panel" in features_dict:
                             cell_genes_data = features_dict["xenium_panel"].value
                     
-                    # Если данных нет — заполняем нулями
                     if cell_genes_data is None:
                         gene_values = [0.0] * len(self.target_gene_names)
                     else:
-                        # ИСПРАВЛЕНО: поддержка numpy массивов
                         if isinstance(cell_genes_data, np.ndarray):
                             cell_genes_data = cell_genes_data.tolist()
                         
@@ -136,13 +124,11 @@ class XeniumGraphDataset(Dataset):
                                 g_idx = self.gene_to_idx.get(gene)
                                 gene_values.append(float(cell_genes_data[g_idx]) if g_idx is not None and g_idx < len(cell_genes_data) else 0.0)
                         else:
-                            # Фоллбек: пытаемся преобразовать в список
                             try:
                                 gene_values = [float(x) for x in cell_genes_data[:len(self.target_gene_names)]]
                             except:
                                 gene_values = [0.0] * len(self.target_gene_names)
                     
-                    # Гарантируем правильную длину
                     if len(gene_values) != len(self.target_gene_names):
                         if len(gene_values) < len(self.target_gene_names):
                             gene_values = gene_values + [0.0] * (len(self.target_gene_names) - len(gene_values))

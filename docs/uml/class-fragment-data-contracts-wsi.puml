@@ -1,0 +1,24 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 18
+skinparam ranksep 22
+hide empty members
+
+package "Data Contracts" {
+  class SpotExpressionTarget
+  class SpotExpressionPrediction
+  class RegionalPredictionOutput
+  class ImageMetadata
+  class SegmentationInput
+  class WSILevelMetadata
+  class WSIContainer
+  class WSIRegionContainer
+}
+
+RegionalPredictionOutput *-- SpotExpressionPrediction
+SegmentationInput --> ImageMetadata
+WSIContainer *-- WSILevelMetadata
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+left to right direction
+actor User
+rectangle SpatialScope {
+  usecase "Войти в систему" as UC1
+  usecase "Получить профиль\nтекущего пользователя" as UC2
+}
+User --> UC1
+User --> UC2
+@enduml

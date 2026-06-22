@@ -1,25 +1,23 @@
 import os
 import pickle
-import logging  # <- Добавили для управления логами
+import logging  
 import numpy as np
 import cv2
 import SimpleITK as sitk
 import torch
-from tqdm import tqdm  # <- Добавили прогресс-бар для клеток
-from radiomics import featureextractor  #
-# 1. ТЕХНИЧЕСКИЙ МУТ: Глушим спам от PyRadiomics и SimpleITK в консоли
+from tqdm import tqdm  
+from radiomics import featureextractor  
 import radiomics
-radiomics.logger.setLevel(logging.ERROR)  # Показывать только критические ошибки
+radiomics.logger.setLevel(logging.ERROR)  
 
 from app.core.ml_models.wsi_models.expert_models.AbstractExpertModel import AbstractExpertModel
 from app.core.schemes.Cells import ExpertModelManifest, FeatureMeta, WSICellFeatureRegistry, CellFeaturePassport
 from app.core.schemes.Segmentation import SegmentationContainer
 
-# Хак для NumPy 2.0+ 
-import builtins  # <- Импортируем официальный модуль вместо __builtins__
+import builtins  
 for t in ['float', 'int', 'bool', 'object']:
     if not hasattr(np, t):
-        setattr(np, t, getattr(builtins, t))  # <- Теперь getattr отработает идеально
+        setattr(np, t, getattr(builtins, t))  
 
 class RadiomicsExpertAdapter(AbstractExpertModel):
     """
@@ -29,13 +27,8 @@ class RadiomicsExpertAdapter(AbstractExpertModel):
     EXPERT_KEY = "RadiomicsExpert"
 
     def __init__(self, cache_dir: str = "./data/radiomics_cache"):
-        # Инициализируем экстрактор с явным указанием 2D режима
-        # force2D=True заставляет алгоритмы текстурного анализа (GLCM, GLRLM и др.)
-        # работать строго в плоскости кадра (по осям X и Y)
         self.extractor = featureextractor.RadiomicsFeatureExtractor(force2D=True)
         self.extractor.enableAllFeatures() 
-        
-        # Настройка директории кэша
         self.cache_dir = cache_dir
         os.makedirs(self.cache_dir, exist_ok=True)
         
@@ -51,7 +44,6 @@ class RadiomicsExpertAdapter(AbstractExpertModel):
         )
 
     def predict(self, patch_image: torch.Tensor, cell_registry: SegmentationContainer, patch_id: str = "patch") -> WSICellFeatureRegistry:
-        # Проверка дискового кэша
         cache_path = os.path.join(self.cache_dir, f"{patch_id}_radiomics.pkl")
         if os.path.exists(cache_path):
             print(f"        💾 [Кэш] {patch_id} загружен из файла.")
@@ -60,7 +52,6 @@ class RadiomicsExpertAdapter(AbstractExpertModel):
 
         cells_passports = []
         
-        # Конвертация тензора
         if isinstance(patch_image, torch.Tensor):
             np_image = patch_image.detach().cpu().numpy()
             if np_image.ndim == 3:
@@ -75,11 +66,8 @@ class RadiomicsExpertAdapter(AbstractExpertModel):
 
         img_h, img_w = np_image_gray.shape
         
-        # Получаем список клеток для обработки
         instances = cell_registry.instances if cell_registry.instances else []
         
-        # 2. ОДИН ЧИСТЫЙ ПРОГРЕСС-БАР ДЛЯ ВСЕХ КЛЕТОК В ПАТЧЕ
-        # leave=False означает, что после завершения бар сотрется и не будет забивать экран
         for cell in tqdm(instances, desc=f"        📐 Расчет радиомики для {patch_id}", leave=False):
             points = cell.polygon.points if hasattr(cell, 'polygon') else []
             if not points:
@@ -119,7 +107,7 @@ class RadiomicsExpertAdapter(AbstractExpertModel):
 
         registry = WSICellFeatureRegistry(
             slide_id="xenium_slide", 
-            x_wsi=0.0, y_wsi=0.0, x_local=0.0, y_local=0.0,  # <- ВОТ ЭТИ 4 ПАРАМЕТРА ОДОБРЯТ PYDANTIC
+            x_wsi=0.0, y_wsi=0.0, x_local=0.0, y_local=0.0,  
             cells=cells_passports, 
             models_manifests=[self.manifest]
         )

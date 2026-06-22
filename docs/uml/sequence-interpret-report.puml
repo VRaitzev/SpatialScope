@@ -1,0 +1,61 @@
+@startuml
+skinparam backgroundColor #ffffff
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontColor #0f172a
+skinparam sequence {
+  ArrowColor #1e293b
+  LifeLineBorderColor #334155
+  LifeLineBackgroundColor #f8fafc
+  ParticipantBorderColor #1e293b
+  ParticipantBackgroundColor #f8fafc
+  ParticipantFontColor #0f172a
+  ActorBorderColor #1e293b
+  ActorBackgroundColor #f8fafc
+  ActorFontColor #0f172a
+  BoxBorderColor #334155
+  BoxBackgroundColor #f8fafc
+  GroupBorderColor #334155
+  GroupBackgroundColor #f8fafc
+  GroupFontColor #0f172a
+  DividerBorderColor #334155
+  DividerBackgroundColor #e2e8f0
+  DividerFontColor #0f172a
+  ReferenceBorderColor #334155
+  ReferenceBackgroundColor #f8fafc
+  ReferenceFontColor #0f172a
+  MessageFontColor #0f172a
+  MessageAlign center
+  ResponseMessageBelowArrow true
+}
+skinparam defaultFontSize 18
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+skinparam sequenceArrowThickness 2
+skinparam sequenceMessageAlign direction
+skinparam maxMessageSize 32
+hide footbox
+actor "Клиницист" as C
+participant "Frontend" as FE
+participant "API /reports/{id}/interpret" as API
+participant "Orchestrator" as ORCH
+participant "Interpretation Service" as IS
+participant "EffNet Interpreter" as EINT
+participant "GNN Interpreter" as GINT
+participant "DB Service" as DB
+
+C -> FE : Запрашивает интерпретацию отчёта
+FE -> API : POST /api/reports/{report_id}/interpret
+API -> ORCH : interpret_report(report_id, target_gene)
+ORCH -> DB : get_report_by_id(report_id)
+DB --> ORCH : AnalysisReport
+ORCH -> IS : interpret_saved_report(...)
+IS -> EINT : interpret(...)
+IS -> GINT : interpret(...)
+EINT --> IS : InterpretationResult
+GINT --> IS : InterpretationResult
+IS --> ORCH : List<InterpretationResult>
+ORCH --> API : interpreted report data
+API --> FE : success
+FE --> C : Отображение интерпретации
+@enduml

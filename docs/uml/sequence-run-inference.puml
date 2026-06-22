@@ -1,0 +1,82 @@
+@startuml
+skinparam backgroundColor #ffffff
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontColor #0f172a
+skinparam sequence {
+  ArrowColor #1e293b
+  LifeLineBorderColor #334155
+  LifeLineBackgroundColor #f8fafc
+  ParticipantBorderColor #1e293b
+  ParticipantBackgroundColor #f8fafc
+  ParticipantFontColor #0f172a
+  ActorBorderColor #1e293b
+  ActorBackgroundColor #f8fafc
+  ActorFontColor #0f172a
+  BoxBorderColor #334155
+  BoxBackgroundColor #f8fafc
+  GroupBorderColor #334155
+  GroupBackgroundColor #f8fafc
+  GroupFontColor #0f172a
+  DividerBorderColor #334155
+  DividerBackgroundColor #e2e8f0
+  DividerFontColor #0f172a
+  ReferenceBorderColor #334155
+  ReferenceBackgroundColor #f8fafc
+  ReferenceFontColor #0f172a
+  MessageFontColor #0f172a
+  MessageAlign center
+  ResponseMessageBelowArrow true
+}
+skinparam defaultFontSize 17
+skinparam ParticipantPadding 14
+skinparam BoxPadding 8
+skinparam sequenceArrowThickness 2
+skinparam sequenceMessageAlign direction
+skinparam maxMessageSize 28
+hide footbox
+actor "Клиницист" as C
+participant "Frontend" as FE
+participant "API /inference/run" as API
+participant "Orchestrator" as ORCH
+participant "Preset Registry" as REG
+participant "WSI Loader" as WSI
+participant "Boundary Adapter" as BOUND
+participant "Expert Models" as EXP
+participant "Spatial GNN" as GNN
+participant "Interpretation Service" as IS
+participant "EffNet Interpreter" as EINT
+participant "GNN Interpreter" as GINT
+participant "DB Service" as DB
+
+C -> FE : Выбор ROI, patch_size, preset, target_gene
+FE -> API : POST /api/inference/run
+API -> ORCH : run_inference_and_save_report(...)
+ORCH -> REG : get_preset(preset_id or active)
+ORCH -> ORCH : _ensure_slide_is_cached(slide_id)
+ORCH -> REG : get_models_for_preset(preset_id)
+REG --> ORCH : concrete expert models + SpatialGNNAdapter
+ORCH -> REG : get_weights_path(preset_id)
+ORCH -> GNN : load_weights(path)
+ORCH -> WSI : load_region(metadata, x, y, patch_size, patch_size)
+WSI --> ORCH : WSIRegionContainer
+ORCH -> BOUND : load_boundaries(patch_region,...)
+BOUND --> ORCH : SegmentationContainer
+ORCH -> EXP : predict(...)
+EXP --> ORCH : WSICellFeatureRegistry
+ORCH -> GNN : predict_spatial_expression(registry, regional_spots)
+GNN --> ORCH : RegionalPredictionOutput
+opt include_interpretation = true
+  ORCH -> IS : interpret_patch(...)
+  IS -> EINT : interpret(...)
+  IS -> GINT : interpret(...)
+  EINT --> IS : InterpretationResult
+  GINT --> IS : InterpretationResult
+  IS --> ORCH : List<InterpretationResult>
+end
+ORCH -> DB : create_analysis_report(...)
+ORCH -> DB : log_action(... RUN_INFERENCE ...)
+DB --> ORCH : AnalysisReport
+ORCH --> API : report_id + predicted_expression + interpretation
+API --> FE : success
+@enduml

@@ -1,0 +1,12 @@
+@startuml
+[*] --> Initialized
+Initialized --> CacheChecked : predict()
+CacheChecked --> LoadedFromCache : cached registry exists
+CacheChecked --> NeighborhoodBuilt : KDTree / centroids prepared
+NeighborhoodBuilt --> MorphologyComputed : polygons processed
+MorphologyComputed --> RegistryBuilt : WSICellFeatureRegistry
+RegistryBuilt --> SavedToCache : pickle.dump()
+SavedToCache --> ReadyForReuse
+LoadedFromCache --> ReadyForReuse
+ReadyForReuse --> CacheChecked : next predict()
+@enduml

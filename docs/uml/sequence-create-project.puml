@@ -1,0 +1,53 @@
+@startuml
+skinparam backgroundColor #ffffff
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontColor #0f172a
+skinparam sequence {
+  ArrowColor #1e293b
+  LifeLineBorderColor #334155
+  LifeLineBackgroundColor #f8fafc
+  ParticipantBorderColor #1e293b
+  ParticipantBackgroundColor #f8fafc
+  ParticipantFontColor #0f172a
+  ActorBorderColor #1e293b
+  ActorBackgroundColor #f8fafc
+  ActorFontColor #0f172a
+  BoxBorderColor #334155
+  BoxBackgroundColor #f8fafc
+  GroupBorderColor #334155
+  GroupBackgroundColor #f8fafc
+  GroupFontColor #0f172a
+  DividerBorderColor #334155
+  DividerBackgroundColor #e2e8f0
+  DividerFontColor #0f172a
+  ReferenceBorderColor #334155
+  ReferenceBackgroundColor #f8fafc
+  ReferenceFontColor #0f172a
+  MessageFontColor #0f172a
+  MessageAlign center
+  ResponseMessageBelowArrow true
+}
+skinparam defaultFontSize 18
+skinparam ParticipantPadding 24
+skinparam BoxPadding 10
+skinparam sequenceArrowThickness 2
+skinparam sequenceMessageAlign direction
+skinparam maxMessageSize 34
+hide footbox
+actor "Исследователь" as R
+participant "Frontend" as FE
+participant "API /projects" as API
+participant "Orchestrator" as ORCH
+participant "DB Service" as DB
+
+R -> FE : Ввод названия и описания проекта
+FE -> API : POST /api/projects
+API -> ORCH : create_new_project(user_id, name, description, ip_address)
+ORCH -> DB : create_project(...)
+DB --> ORCH : Project
+ORCH -> DB : log_action(... CREATE_PROJECT ...)
+ORCH --> API : project_id
+API --> FE : success + project_id
+FE --> R : Отображение нового проекта в dashboard
+@enduml

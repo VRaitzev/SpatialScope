@@ -10,3 +10,5 @@ data/
 # Virtual environments
 .venv/
 venv/
+*.db
+*.bin

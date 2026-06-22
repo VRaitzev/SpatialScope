@@ -5,10 +5,6 @@ from sqlalchemy.orm import relationship, declarative_base, sessionmaker
 
 Base = declarative_base()
 
-# =====================================================================
-# 1. СЛОЙ ПОЛЬЗОВАТЕЛЕЙ И ДОСТУПА
-# =====================================================================
-
 class User(Base):
     __tablename__ = 'users'
     
@@ -17,7 +13,6 @@ class User(Base):
     name = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
     
-    # Роли разделяем строго под наши сценарии: 'clinician' (Врач), 'researcher' (ML-инженер), 'admin'
     role = Column(String, default='clinician', nullable=False)  
     
     projects = relationship("Project", back_populates="owner", cascade="all, delete-orphan")
@@ -37,11 +32,6 @@ class Project(Base):
     owner = relationship("User", back_populates="projects")
     slides = relationship("XeniumSlide", back_populates="project", cascade="all, delete-orphan")
 
-
-# =====================================================================
-# 2. СЛОЙ МУЛЬТИМОДАЛЬНЫХ ДАННЫХ XENIUM
-# =====================================================================
-
 class XeniumSlide(Base):
     """
     Таблица для хранения путей к Xenium-слайдам.
@@ -53,24 +43,17 @@ class XeniumSlide(Base):
     project_id = Column(String, ForeignKey('projects.id', ondelete="CASCADE"))
     patient_name = Column(String, nullable=False)
     
-    # Комплекс путей (в S3 или локальном хранилище), который требует наш Оркестратор
-    slide_tiff_path = Column(String, nullable=False)      # Исходное WSI изображение (.ome.tif)
-    cells_parquet_path = Column(String, nullable=False)   # Координаты сегментации клеток
-    matrix_hdf5_path = Column(String, nullable=False)     # Матрица транскриптомной экспрессии
+    slide_tiff_path = Column(String, nullable=False)      
+    cells_parquet_path = Column(String, nullable=False)   
+    matrix_hdf5_path = Column(String, nullable=False)     
     
-    # Кэшируем метаданные слайда (размеры, MPP, каналы), чтобы не читать тяжелый файл каждый раз
     slide_metadata = Column(JSON, nullable=True) 
     
-    status = Column(String, default='queued')  # queued, processing, ready, failed
+    status = Column(String, default='queued')
     created_at = Column(DateTime, default=datetime.utcnow)
     
     project = relationship("Project", back_populates="slides")
     reports = relationship("AnalysisReport", back_populates="slide", cascade="all, delete-orphan")
-
-
-# =====================================================================
-# 3. СЛОЙ УПРАВЛЕНИЯ ПРЕСЕТАМИ МОДЕЛЕЙ (Для Реестра)
-# =====================================================================
 
 class MLModel(Base):
     """Реестр атомарных ML-моделей (загруженных весов)"""
@@ -79,13 +62,11 @@ class MLModel(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, nullable=False)
     
-    # 'expert' (EfficientNet/Radiomics) или 'spatial' (GNN/Transformer)
     model_type = Column(String, nullable=False)  
     
-    # Ключ, по которому модель опознается в коде оркестратора (например, 'EfficientNetExpert')
     model_key = Column(String, nullable=False)   
-    weights_path = Column(String, nullable=True)  # Путь к файлу .pth или .pkl на сервере
-    manifest = Column(JSON, nullable=True)        # Паспорт модели (версия, описание генов)
+    weights_path = Column(String, nullable=True)  
+    manifest = Column(JSON, nullable=True)       
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -100,20 +81,13 @@ class ModelPreset(Base):
     name = Column(String, nullable=False)
     description = Column(String)
     
-    # Связи с таблицей атомарных моделей
     expert_model_id = Column(String, ForeignKey('ml_models.id'))
     spatial_model_id = Column(String, ForeignKey('ml_models.id'))
     
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    # Настраиваем явные связи с именами (используем инородные имена для однозначности)
     expert_model = relationship("MLModel", foreign_keys=[expert_model_id])
     spatial_model = relationship("MLModel", foreign_keys=[spatial_model_id])
-
-
-# =====================================================================
-# 4. СЛОЙ КЛИНИЧЕСКИХ ОТЧЕТОВ И АУДИТА
-# =====================================================================
 
 class AnalysisReport(Base):
     """
@@ -127,10 +101,8 @@ class AnalysisReport(Base):
     slide_id = Column(String, ForeignKey('xenium_slides.id', ondelete="CASCADE"))
     preset_id = Column(String, ForeignKey('model_presets.id'))
     
-    # Координаты патча (какой именно участок ткани анализировал врач)
-    roi_coordinates = Column(JSON, nullable=False)  # {"x": 1024, "y": 2048, "patch_size": 512}
+    roi_coordinates = Column(JSON, nullable=False) 
     
-    # Самое главное: Предсказанный профиль экспрессии (структура RegionalPredictionOutput в JSON)
     predicted_expression_data = Column(JSON, nullable=False) 
     
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -146,12 +118,11 @@ class AuditLog(Base):
     
     id = Column(Integer, primary_key=True)
     user_id = Column(String, ForeignKey('users.id', ondelete="SET NULL"), nullable=True)
-    action = Column(String, nullable=False)  # например: 'USER_LOGIN', 'RUN_INFERENCE', 'CREATE_PRESET'
+    action = Column(String, nullable=False) 
     timestamp = Column(DateTime, default=datetime.utcnow)
     ip_address = Column(String)
 
 
-# --- Инициализация локальной БД ---
 if __name__ == "__main__":
     engine = create_engine('sqlite:///system_data.db')
     Base.metadata.create_all(engine)

@@ -1,0 +1,20 @@
+@startuml
+left to right direction
+actor Administrator
+actor Researcher
+actor Clinician
+rectangle SpatialScope {
+  usecase "Просмотреть отчёты по слайду" as UC1
+  usecase "Открыть детальный отчёт" as UC2
+  usecase "Экспортировать отчёт в JSON" as UC3
+}
+Administrator --> UC1
+Researcher --> UC1
+Clinician --> UC1
+Administrator --> UC2
+Researcher --> UC2
+Clinician --> UC2
+Administrator --> UC3
+Researcher --> UC3
+Clinician --> UC3
+@enduml

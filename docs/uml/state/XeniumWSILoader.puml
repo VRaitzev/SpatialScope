@@ -1,0 +1,13 @@
+@startuml
+[*] --> ParquetLoaded
+ParquetLoaded --> BoundariesLoaded : read boundary parquet
+BoundariesLoaded --> CoordinatesNormalized : _normalize_cell_id()
+CoordinatesNormalized --> MetadataReady : load_slide_metadata()
+MetadataReady --> RegionReady : load_region()
+MetadataReady --> ThumbnailReady : build_thumbnail_bytes()
+MetadataReady --> PatchReady : build_patch_bytes()
+RegionReady --> CellQueryReady : get_cells_in_region()
+CellQueryReady --> RegionReady
+ThumbnailReady --> MetadataReady
+PatchReady --> MetadataReady
+@enduml

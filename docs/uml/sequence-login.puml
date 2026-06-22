@@ -1,0 +1,53 @@
+@startuml
+skinparam backgroundColor #ffffff
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontColor #0f172a
+skinparam sequence {
+  ArrowColor #1e293b
+  LifeLineBorderColor #334155
+  LifeLineBackgroundColor #f8fafc
+  ParticipantBorderColor #1e293b
+  ParticipantBackgroundColor #f8fafc
+  ParticipantFontColor #0f172a
+  ActorBorderColor #1e293b
+  ActorBackgroundColor #f8fafc
+  ActorFontColor #0f172a
+  BoxBorderColor #334155
+  BoxBackgroundColor #f8fafc
+  GroupBorderColor #334155
+  GroupBackgroundColor #f8fafc
+  GroupFontColor #0f172a
+  DividerBorderColor #334155
+  DividerBackgroundColor #e2e8f0
+  DividerFontColor #0f172a
+  ReferenceBorderColor #334155
+  ReferenceBackgroundColor #f8fafc
+  ReferenceFontColor #0f172a
+  MessageFontColor #0f172a
+  MessageAlign center
+  ResponseMessageBelowArrow true
+}
+skinparam defaultFontSize 18
+skinparam ParticipantPadding 24
+skinparam BoxPadding 10
+skinparam sequenceArrowThickness 2
+skinparam sequenceMessageAlign direction
+skinparam maxMessageSize 34
+hide footbox
+actor "Пользователь" as U
+participant "Frontend" as FE
+participant "API /users/login" as API
+participant "DB Service" as DB
+participant "JWT" as JWT
+
+U -> FE : Ввод email и password
+FE -> API : POST /api/users/login
+API -> DB : get_user_by_email(email)
+DB --> API : User
+API -> API : verify_password(password, user.password_hash)
+API -> JWT : create_access_token({sub, email, role})
+JWT --> API : token
+API --> FE : success + token + user
+FE --> U : Сохранение токена и переход в dashboard
+@enduml

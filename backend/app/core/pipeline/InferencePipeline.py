@@ -17,7 +17,7 @@ class SpatialInferencePipeline(AbstractInferencePipeline):
         spatial_model,
         patch_size: int = 1024,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
-        slide_id: str = "unknown_slide"  # <- НОВЫЙ ПАРАМЕТР
+        slide_id: str = "unknown_slide"  
     ):
         self.wsi_loader = wsi_loader
         self.segmentation_model = segmentation_model
@@ -27,7 +27,6 @@ class SpatialInferencePipeline(AbstractInferencePipeline):
         self.device = device
         self.slide_id = slide_id
         
-        # Переносим на GPU если нужно
         if hasattr(self.expert_model, "to"):
             self.expert_model = self.expert_model.to(device)
         if hasattr(self.expert_model, "eval"):
@@ -72,11 +71,9 @@ class SpatialInferencePipeline(AbstractInferencePipeline):
         Шаг 2: Извлечение признаков клеток.
         ИСПРАВЛЕНО: теперь передаются все необходимые параметры.
         """
-        # Проверяем, нужна ли эксперту картинка
         expert_key = getattr(self.expert_model, 'EXPERT_KEY', '')
         
         if "EfficientNet" in expert_key or "Radiomics" in expert_key:
-            # Для экспертов, которым нужно изображение
             if hasattr(wsi_patch, 'image_tensor'):
                 patch_tensor = wsi_patch.image_tensor
             elif hasattr(wsi_patch, 'image'):
@@ -91,7 +88,6 @@ class SpatialInferencePipeline(AbstractInferencePipeline):
                 patch_id=patch_id
             )
         else:
-            # Для геометрического эксперта
             return self.expert_model.predict(
                 cell_registry=segments,
                 patch_id=patch_id,
@@ -109,7 +105,6 @@ class SpatialInferencePipeline(AbstractInferencePipeline):
         Шаг 3: Графовый инференс.
         ИСПРАВЛЕНО: передаём patch_id.
         """
-        # Убеждаемся, что у spatial_model есть expert_key
         if not hasattr(self.spatial_model, 'expert_key'):
             if hasattr(self.expert_model, 'EXPERT_KEY'):
                 self.spatial_model.expert_key = self.expert_model.EXPERT_KEY
@@ -127,26 +122,21 @@ class SpatialInferencePipeline(AbstractInferencePipeline):
         wsi_container = self.data_prepare(path)
         all_results = []
 
-        # Счетчик патчей для уникальных ID
         patch_counter = 0
         
         for patch in tqdm(self._generate_patches(wsi_container), desc="Processing WSI Patches"):
             patch_id = f"patch_{self.slide_id}_{patch_counter}"
             patch_counter += 1
             
-            # 1. Сегментация
             segments = self.patch_segmentation(patch)
             
             if not segments.instances:
                 continue
 
-            # 2. Извлечение признаков (ИСПРАВЛЕНО: передаём patch и patch_id)
             cell_features = self.patch_feature_extraction(segments, patch, patch_id)
 
-            # 3. Фильтрация ST-спотов
             patch_spots = self._filter_spots_for_patch(spots_locations, patch) if spots_locations else []
 
-            # 4. Предсказание (ИСПРАВЛЕНО: передаём patch_id)
             patch_predictions = self.patch_predict(cell_features, patch_spots, patch_id)
             all_results.append(patch_predictions)
 

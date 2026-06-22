@@ -1,0 +1,9 @@
+@startuml
+[*] --> Initialized
+Initialized --> ForwardRunning : forward(x, edge_index)
+ForwardRunning --> FirstAttentionLayerComputed : conv1(x, edge_index)
+FirstAttentionLayerComputed --> ActivationApplied : F.elu(x)
+ActivationApplied --> OutputLayerComputed : conv2(x, edge_index)
+OutputLayerComputed --> PredictionReturned : gene logits returned
+PredictionReturned --> Initialized
+@enduml

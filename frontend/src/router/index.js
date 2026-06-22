@@ -1,29 +1,38 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
 import Dashboard from '../views/Dashboard.vue'
 import SlideViewer from '../views/SlideViewer.vue'
 import Results from '../views/Results.vue'
 
 const routes = [
-  { path: '/login', component: Login },
-  { path: '/', component: Dashboard },
-  { path: '/slide/:id', component: SlideViewer },
-  { path: '/results/:id', component: Results }
+  { path: '/login', name: 'login', component: Login, meta: { public: true } },
+  { path: '/register', name: 'register', component: Register, meta: { public: true } },
+  { path: '/', name: 'dashboard', component: Dashboard },
+  { path: '/slide/:id', name: 'slide', component: SlideViewer },
+  { path: '/results/:id', name: 'results', component: Results },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 })
 
-// Защита маршрутов
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
-  if (to.path !== '/login' && !token) {
-    next('/login')
-  } else {
-    next()
+  const isPublic = Boolean(to.meta.public)
+
+  if (!isPublic && !token) {
+    next({ name: 'login' })
+    return
   }
+
+  if (isPublic && token) {
+    next({ name: 'dashboard' })
+    return
+  }
+
+  next()
 })
 
 export default router

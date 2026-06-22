@@ -1,0 +1,38 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #2c3e50
+  ArrowColor #34495e
+  FontColor #2c3e50
+}
+skinparam actor {
+  BorderColor #2c3e50
+  BackgroundColor #ecf0f1
+  FontColor #2c3e50
+}
+
+actor "Researcher" as Researcher
+actor "Administrator" as Admin
+actor "Clinician" as Clinician
+
+rectangle "SpatialScope — Обучение" {
+  usecase "Запустить фоновое\nобучение" as UC_Train
+  usecase "Настроить\ntraining ROI" as UC_SetTrainingROI
+  usecase "Отслеживать\nстатус job" as UC_TrackJob
+}
+
+Researcher --> UC_Train
+Researcher --> UC_TrackJob
+
+Admin --> UC_Train
+Admin --> UC_TrackJob
+
+Clinician --> UC_TrackJob
+
+UC_Train .> UC_SetTrainingROI : <<include>>
+UC_Train .> UC_TrackJob : <<include>>
+@enduml

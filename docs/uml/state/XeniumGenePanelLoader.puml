@@ -1,0 +1,7 @@
+@startuml
+[*] --> MatrixOpened
+MatrixOpened --> MatrixIndexed : HDF5 matrix loaded in memory
+MatrixIndexed --> GeneNamesAvailable : genes catalog prepared
+GeneNamesAvailable --> VectorQueryAvailable : get_gene_vector()
+VectorQueryAvailable --> GeneNamesAvailable : repeated queries
+@enduml

@@ -1,0 +1,45 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 20
+skinparam ranksep 24
+hide empty members
+
+package "Loaders" {
+  abstract class AbstractTranscriptomicsLoader
+  class XeniumGenePanelLoader
+  abstract class AbstractWSILoader
+  class XeniumWSILoader
+  abstract class AbstractCellBoundaryLoader
+  class XeniumCellBoundaryAdapter
+  class XeniumGraphDataset
+}
+
+package "Data Contracts" {
+  class WSICellFeatureRegistry
+  class SegmentationContainer
+  class WSIContainer
+  class WSIRegionContainer
+}
+
+package "Models" {
+  abstract class AbstractExpertModel
+  abstract class AbstractSpatialSpotModel
+}
+
+AbstractTranscriptomicsLoader <|-- XeniumGenePanelLoader
+AbstractWSILoader <|-- XeniumWSILoader
+AbstractCellBoundaryLoader <|-- XeniumCellBoundaryAdapter
+XeniumCellBoundaryAdapter --> XeniumWSILoader
+XeniumCellBoundaryAdapter --> XeniumGenePanelLoader
+XeniumGraphDataset --> WSICellFeatureRegistry
+AbstractWSILoader ..> WSIContainer
+AbstractWSILoader ..> WSIRegionContainer
+AbstractCellBoundaryLoader ..> WSIRegionContainer
+AbstractCellBoundaryLoader ..> SegmentationContainer
+AbstractExpertModel ..> SegmentationContainer
+AbstractExpertModel ..> WSICellFeatureRegistry
+AbstractSpatialSpotModel ..> WSICellFeatureRegistry
+@enduml

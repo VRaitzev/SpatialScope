@@ -1,0 +1,12 @@
+@startuml
+[*] --> Generated
+Generated --> Interpreted : interpret_patch() / include_interpretation = true
+Generated --> Persisted : create_analysis_report()
+Interpreted --> Persisted : create_analysis_report()
+Persisted --> Listed : get_slide_reports()
+Persisted --> Opened : get_report_by_id()
+Listed --> Opened : select report
+Opened --> Interpreted : interpret_report()
+Opened --> Exported : export_report_json()
+Exported --> Opened
+@enduml

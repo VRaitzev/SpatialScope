@@ -1,0 +1,11 @@
+@startuml
+[*] --> Empty
+Empty --> ExpertsRegistered : register_expert()
+ExpertsRegistered --> SpatialModelsRegistered : register_spatial_model()
+SpatialModelsRegistered --> PresetsAvailable : create_preset()
+PresetsAvailable --> ActivePresetSelected : set_active_preset()
+ActivePresetSelected --> RuntimeResolved : get_models_for_preset()
+RuntimeResolved --> ActivePresetSelected
+ActivePresetSelected --> PresetsEnumerated : get_available_presets()
+PresetsEnumerated --> ActivePresetSelected
+@enduml

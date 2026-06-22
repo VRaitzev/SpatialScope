@@ -1,0 +1,13 @@
+@startuml
+[*] --> Initialized
+Initialized --> DataPrepared : data_prepare()
+DataPrepared --> TrainingRunning : train()
+TrainingRunning --> EpochCompleted : loss computed
+EpochCompleted --> CheckpointSaved : _save_checkpoint()
+CheckpointSaved --> TrainingRunning : next epoch
+EpochCompleted --> BestModelUpdated : loss < best_loss
+BestModelUpdated --> TrainingRunning
+TrainingRunning --> Finished : all epochs complete
+Finished --> BestModelLoaded : load_best_model()
+BestModelLoaded --> Finished
+@enduml

@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -43,18 +44,22 @@ class SpatialGNNAdapter(AbstractSpatialSpotModel):
         expert_key: str,
         spot_radius: float = 50.0
     ):
-        """
-        Убраны дефолтные магические числа. Теперь все параметры приходят снаружи.
-        """
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        
-        # Запоминаем конфигурацию
         self.gene_names = gene_names
         self.expert_key = expert_key
         self.spot_radius = spot_radius
-        
-        # Инициализируем модель на основе переданного списка генов
+        self.hidden_dim = hidden_dim
+        self._feature_dim = feature_dim
         self.model = TranscriptomicsGNN(feature_dim, hidden_dim, len(gene_names))
+        self.model.to(self.device)
+
+    def _ensure_model(self, feature_dim: int) -> None:
+        if feature_dim <= 0:
+            raise ValueError("feature_dim must be positive")
+        if self.model is not None and self._feature_dim == feature_dim:
+            return
+        self._feature_dim = feature_dim
+        self.model = TranscriptomicsGNN(feature_dim, self.hidden_dim, len(self.gene_names))
         self.model.to(self.device)
 
     @property
@@ -68,8 +73,17 @@ class SpatialGNNAdapter(AbstractSpatialSpotModel):
         )
 
     def load_weights(self, path: str) -> None:
-        """Загрузка весов обученной GNN."""
-        self.model.load_state_dict(torch.load(path, map_location=self.device))
+        """Load trained GNN weights."""
+        if not os.path.exists(path):
+            return
+        checkpoint = torch.load(path, map_location=self.device)
+        state_dict = checkpoint.get("model_state_dict", checkpoint)
+        first_key = next(iter(state_dict))
+        if "conv1" in first_key and "weight" in first_key:
+            weight = state_dict[first_key]
+            if weight.ndim >= 2:
+                self._ensure_model(int(weight.shape[1]))
+        self.model.load_state_dict(state_dict, strict=False)
         self.model.eval()
 
     def save_weights(self, path: str) -> None:
@@ -106,8 +120,17 @@ class SpatialGNNAdapter(AbstractSpatialSpotModel):
         edge_index, _ = add_self_loops(edge_index, num_nodes=len(coords))
         
         # 3. Динамическое извлечение фич по переданному ключу эксперта
-        x_list = [c.expert_embeddings[self.expert_key] for c in patch_registry.cells]
-        
+        x_list = []
+        for c in patch_registry.cells:
+            if self.expert_key not in c.expert_embeddings:
+                raise KeyError(
+                    f"Expert key '{self.expert_key}' missing for cell {c.cell_id}. "
+                    f"Available: {list(c.expert_embeddings.keys())}"
+                )
+            x_list.append(c.expert_embeddings[self.expert_key])
+
+        feature_dim = len(x_list[0])
+        self._ensure_model(feature_dim)
         x = torch.tensor(x_list, dtype=torch.float, device=self.device)
         edge_index = edge_index.to(self.device)
         

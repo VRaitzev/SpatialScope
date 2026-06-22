@@ -1,0 +1,11 @@
+@startuml
+[*] --> Initialized
+Initialized --> WeightsLoaded : load_weights()
+Initialized --> GraphReady : _build_graph()
+WeightsLoaded --> GraphReady
+GraphReady --> InferenceRunning : predict_spatial_expression()
+InferenceRunning --> PredictionReturned : RegionalPredictionOutput
+PredictionReturned --> GraphReady
+GraphReady --> Saved : save_weights()
+Saved --> GraphReady
+@enduml

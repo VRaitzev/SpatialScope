@@ -1,0 +1,49 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 20
+skinparam ranksep 24
+hide empty members
+
+package "Registry & Orchestration" {
+  abstract class AbstractModelRegistry
+  class PresetConfiguration
+  class ModelPresetRegistry
+  class BaseSpatialOrchestrator
+  class XeniumSystemOrchestrator
+}
+
+package "Persistence Layer" {
+  class DatabaseService
+}
+
+package "Interpretability" {
+  class InterpretationService
+}
+
+package "Loaders" {
+  class XeniumWSILoader
+  class XeniumGenePanelLoader
+  class XeniumCellBoundaryAdapter
+  class XeniumGraphDataset
+}
+
+package "Pipelines" {
+  class SpatialTrainPipeline
+}
+
+AbstractModelRegistry <|-- ModelPresetRegistry
+BaseSpatialOrchestrator <|-- XeniumSystemOrchestrator
+ModelPresetRegistry *-- PresetConfiguration
+
+XeniumSystemOrchestrator --> DatabaseService
+XeniumSystemOrchestrator --> ModelPresetRegistry
+XeniumSystemOrchestrator --> InterpretationService
+XeniumSystemOrchestrator --> XeniumWSILoader
+XeniumSystemOrchestrator --> XeniumGenePanelLoader
+XeniumSystemOrchestrator --> XeniumCellBoundaryAdapter
+XeniumSystemOrchestrator --> SpatialTrainPipeline
+XeniumSystemOrchestrator --> XeniumGraphDataset
+@enduml

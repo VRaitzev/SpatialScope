@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+actor Administrator
+actor Researcher
+actor Clinician
+rectangle SpatialScope {
+  usecase "Запустить инференс по ROI" as UC1
+  usecase "Выбрать пресет модели" as UC2
+  usecase "Построить интерпретацию" as UC3
+  usecase "Сохранить отчёт анализа" as UC4
+}
+Administrator --> UC1
+Researcher --> UC1
+Clinician --> UC1
+UC1 .> UC2 : <<include>>
+UC1 .> UC3 : <<include>>
+UC1 .> UC4 : <<include>>
+@enduml

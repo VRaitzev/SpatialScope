@@ -1,0 +1,13 @@
+@startuml
+[*] --> Initialized
+Initialized --> CacheChecked : predict()
+CacheChecked --> LoadedFromCache : cached registry exists
+CacheChecked --> PatchPrepared : cache miss
+PatchPrepared --> ROIsExtracted : roi_align()
+ROIsExtracted --> EmbeddingsComputed : feature_extractor()
+EmbeddingsComputed --> RegistryBuilt : WSICellFeatureRegistry
+RegistryBuilt --> SavedToCache : pickle.dump()
+SavedToCache --> ReadyForReuse
+LoadedFromCache --> ReadyForReuse
+ReadyForReuse --> CacheChecked : next predict()
+@enduml

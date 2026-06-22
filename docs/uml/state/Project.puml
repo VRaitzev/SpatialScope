@@ -1,0 +1,7 @@
+@startuml
+[*] --> Created
+Created --> ListedInDashboard : get_dashboard_data()
+ListedInDashboard --> SlideAttached : register_and_cache_slide()
+SlideAttached --> SlideAttached : get_project_slides()
+SlideAttached --> ListedInDashboard : dashboard refresh
+@enduml

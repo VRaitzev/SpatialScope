@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torchvision import models
 from torchvision.ops import roi_align
-from tqdm import tqdm  # <- Добавили прогресс-бар для батчей
+from tqdm import tqdm  
 
 from app.core.ml_models.wsi_models.expert_models.AbstractExpertModel import AbstractExpertModel
 from app.core.schemes.Cells import ExpertModelManifest, FeatureMeta, WSICellFeatureRegistry, CellFeaturePassport
@@ -18,20 +18,16 @@ class EfficientNetExpertAdapter(AbstractExpertModel):
     EXPERT_KEY = "EfficientNetExpert"
 
     def __init__(self, batch_size: int = 32, cache_dir: str = "./data/efficientnet_cache"):
-        # Загружаем предобученную EfficientNet-B0
         self.model = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.DEFAULT)
-        # Оставляем только эмбеддинги (размерность 1280)
         self.feature_extractor = nn.Sequential(*list(self.model.children())[:-1])
         
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.feature_extractor.to(self.device).eval()
         self.batch_size = batch_size
 
-        # Директория для сохранения эмбеддингов нейросети
         self.cache_dir = cache_dir
         os.makedirs(self.cache_dir, exist_ok=True)
 
-        # Стандартные параметры нормализации для ImageNet
         self.mean = torch.tensor([0.485, 0.456, 0.406], device=self.device).view(1, 3, 1, 1)
         self.std = torch.tensor([0.229, 0.224, 0.225], device=self.device).view(1, 3, 1, 1)
 
@@ -50,7 +46,6 @@ class EfficientNetExpertAdapter(AbstractExpertModel):
         """
         Предикт с батчевым извлечением через roi_align и сохранением на диск.
         """
-        # 1. ПРОВЕРЯЕМ ДИСКОВЫЙ КЭШ ДЛЯ НЕЙРОСЕТИ
         cache_path = os.path.join(self.cache_dir, f"{patch_id}_effnet.pkl")
         if os.path.exists(cache_path):
             print(f"        💾 [Кэш] {patch_id} (EfficientNet) загружен из файла.")
@@ -61,7 +56,6 @@ class EfficientNetExpertAdapter(AbstractExpertModel):
         if not instances:
             return WSICellFeatureRegistry(slide_id="unknown_slide", cells=[], models_manifests=[self.manifest])
 
-        # Подготовка патча на GPU
         patch_tensor = patch_image.to(self.device).to(torch.float32) / 255.0
         patch_batch = patch_tensor.unsqueeze(0)
         _, patch_h, patch_w = patch_tensor.shape
@@ -76,9 +70,7 @@ class EfficientNetExpertAdapter(AbstractExpertModel):
         boxes_tensor = torch.tensor(boxes, dtype=torch.float32, device=self.device)
         cells_passports = []
 
-        # 2. ПРОГЕН СО СТРИМИНГ-БАРОМ ПО БАТЧАМ
         with torch.no_grad():
-            # Заворачиваем итератор батчей в tqdm
             for start in tqdm(
                 range(0, len(valid_cells), self.batch_size), 
                 desc=f"        🧠 Извлечение нейрофич для {patch_id}", 
@@ -87,17 +79,14 @@ class EfficientNetExpertAdapter(AbstractExpertModel):
                 chunk_cells = valid_cells[start:start + self.batch_size]
                 chunk_boxes = boxes_tensor[start:start + self.batch_size]
 
-                # Быстрая вырезка через ROI Align
                 crops = roi_align(patch_batch, chunk_boxes, output_size=(224, 224), aligned=True)
                 crops = (crops - self.mean) / self.std
 
-                # Экстракция признаков
                 embeddings = self.feature_extractor(crops).squeeze(-1).squeeze(-1)
                 embeddings = embeddings.cpu().numpy().tolist()
 
                 for cell, emb in zip(chunk_cells, embeddings):
                     cells_passports.append(CellFeaturePassport(
-                        # Исправлено: добавили вторую координату в ID, чтобы избежать дублирования
                         cell_id=f"cell_{cell.centroid[0]}_{cell.centroid[1]}",
                         slide_id="xenium_slide",
                         segmentation_data=cell,
@@ -106,12 +95,11 @@ class EfficientNetExpertAdapter(AbstractExpertModel):
 
         registry = WSICellFeatureRegistry(
             slide_id="xenium_slide", 
-            x_wsi=0.0, y_wsi=0.0, x_local=0.0, y_local=0.0,  # <- ДОБАВЛЯЕМ СЮДА ТОЖЕ
+            x_wsi=0.0, y_wsi=0.0, x_local=0.0, y_local=0.0,  
             cells=cells_passports, 
             models_manifests=[self.manifest]
         )
 
-        # 3. СОХРАНЯЕМ РЕЗУЛЬТАТ В КЭШ
         with open(cache_path, 'wb') as f:
             pickle.dump(registry, f)
 

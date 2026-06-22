@@ -1,0 +1,9 @@
+@startuml
+[*] --> Ready
+Ready --> GraphPrepared : interpret() / _build_graph()
+GraphPrepared --> AttentionCollected : conv1(... return_attention_weights=True)
+AttentionCollected --> GradientsComputed : backward()
+GradientsComputed --> NodeScoresCombined : gradients + attention merged
+NodeScoresCombined --> ResultBuilt : InterpretationResult
+ResultBuilt --> Ready
+@enduml

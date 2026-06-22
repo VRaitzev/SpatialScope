@@ -1,0 +1,39 @@
+@startuml
+node "Client Device" {
+  artifact "Web Browser" as Browser
+  artifact "SpatialScope Frontend\n(Vue 3 + Vite SPA)" as Frontend
+}
+
+node "Application Server" {
+  artifact "FastAPI REST API\napp.main" as API
+  artifact "Auth & Role Guard\nJWT / require_roles" as Auth
+  artifact "XeniumSystemOrchestrator" as Orchestrator
+  artifact "ModelPresetRegistry" as Registry
+  artifact "InterpretationService" as Interpret
+  artifact "Expert Models Runtime\nEfficientNet / Radiomics / Geometry" as Experts
+  artifact "Spatial Runtime\nSpatialGNNAdapter" as GNN
+  artifact "Training Runtime\nXeniumGraphDataset + SpatialTrainPipeline" as Train
+}
+
+node "Data Storage" {
+  database "SQLite DB\nusers, projects, slides, reports, audit" as DB
+  folder "Filesystem\nTIFF / Parquet / HDF5" as DataFiles
+  folder "Filesystem\ncache / checkpoints" as CacheFiles
+}
+
+Browser --> Frontend : HTTPS / UI rendering
+Frontend --> API : HTTP(S) JSON API
+API --> Auth : token validation
+API --> Orchestrator : application calls
+API --> Registry : preset listing / activation
+API --> DB : persistence operations
+Orchestrator --> Registry : resolve models
+Orchestrator --> Interpret : build explanations
+Orchestrator --> Experts : feature extraction
+Orchestrator --> GNN : inference
+Orchestrator --> Train : training jobs
+Orchestrator --> DataFiles : load TIFF / Parquet / HDF5
+Experts --> CacheFiles : embeddings cache
+GNN --> CacheFiles : weights load/save
+Train --> CacheFiles : checkpoints
+@enduml

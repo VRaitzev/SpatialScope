@@ -1,0 +1,13 @@
+@startuml
+[*] --> PathsProvided
+PathsProvided --> FilesValidated : register_and_cache_slide() / files exist
+FilesValidated --> MetadataLoaded : load_slide_metadata()
+MetadataLoaded --> Cached : slides_cache[slide_id] initialized
+Cached --> Ready : register_xenium_slide(status=ready)
+Ready --> InferenceAccessible : get_slide_metadata() / load_region()
+InferenceAccessible --> Ready
+Ready --> TrainingProcessing : start_background_training()
+TrainingProcessing --> Ready : update_slide_status(ready)
+TrainingProcessing --> Failed : update_slide_status(failed)
+Failed --> TrainingProcessing : retry training
+@enduml

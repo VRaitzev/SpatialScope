@@ -1,0 +1,44 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #2c3e50
+  ArrowColor #34495e
+  FontColor #2c3e50
+}
+skinparam actor {
+  BorderColor #2c3e50
+  BackgroundColor #ecf0f1
+  FontColor #2c3e50
+}
+
+actor "Clinician" as Clinician
+actor "Researcher" as Researcher
+actor "Administrator" as Admin
+
+rectangle "SpatialScope — Пресеты и инференс" {
+  usecase "Просмотреть список\nпресетов" as UC_ViewPresets
+  usecase "Активировать пресет" as UC_ActivatePreset
+  usecase "Запустить инференс\nпо ROI" as UC_RunInference
+  usecase "Выбрать пресет\nмодели" as UC_SelectPreset
+  usecase "Построить\nинтерпретацию" as UC_Interpret
+  usecase "Сохранить отчёт\nанализа" as UC_SaveReport
+}
+
+Clinician --> UC_ViewPresets
+Clinician --> UC_RunInference
+
+Researcher --> UC_ViewPresets
+Researcher --> UC_RunInference
+
+Admin --> UC_ViewPresets
+Admin --> UC_ActivatePreset
+Admin --> UC_RunInference
+
+UC_RunInference .> UC_SelectPreset : <<include>>
+UC_RunInference .> UC_SaveReport : <<include>>
+UC_Interpret .> UC_RunInference : <<extend>>
+@enduml

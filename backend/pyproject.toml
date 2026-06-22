@@ -30,6 +30,9 @@ dependencies = [
     "radiomics>=0.1",
     "simpleitk>=2.5.5",
     "pyradiomics",
+    "passlib>=1.7.4",
+    "jose>=1.0.0",
+    "bcrypt>=5.0.0",
 ]
 
 [[tool.uv.index]]

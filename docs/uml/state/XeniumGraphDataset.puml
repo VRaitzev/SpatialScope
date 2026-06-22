@@ -1,0 +1,11 @@
+@startuml
+[*] --> Initialized
+Initialized --> PreparingGraphs : _prepare_data()
+PreparingGraphs --> GraphSkipped : too few cells / invalid registry
+PreparingGraphs --> GraphBuilt : Data(x, edge_index, y)
+GraphBuilt --> Stored : append to _precomputed_graphs
+GraphSkipped --> PreparingGraphs : next registry
+Stored --> Ready : all registries processed
+Ready --> Accessed : __getitem__() / __len__()
+Accessed --> Ready
+@enduml

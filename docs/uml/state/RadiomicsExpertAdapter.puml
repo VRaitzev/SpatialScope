@@ -1,0 +1,11 @@
+@startuml
+[*] --> Initialized
+Initialized --> CacheChecked : predict()
+CacheChecked --> LoadedFromCache : cached registry exists
+CacheChecked --> PatchConverted : grayscale / masks prepared
+PatchConverted --> RadiomicsComputed : extractor.execute()
+RadiomicsComputed --> RegistryBuilt : WSICellFeatureRegistry
+RegistryBuilt --> SavedToCache : pickle.dump()
+SavedToCache --> ReadyForReuse
+LoadedFromCache --> ReadyForReuse
+@enduml

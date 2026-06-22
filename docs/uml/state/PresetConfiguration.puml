@@ -1,0 +1,8 @@
+@startuml
+[*] --> Defined
+Defined --> StoredInRegistry : create_preset()
+StoredInRegistry --> Listed : get_available_presets()
+Listed --> Activated : set_active_preset()
+Activated --> Resolved : get_models_for_preset()
+Resolved --> Activated
+@enduml

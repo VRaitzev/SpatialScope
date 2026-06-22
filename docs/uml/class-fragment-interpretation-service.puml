@@ -1,0 +1,41 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 18
+skinparam ranksep 22
+hide empty members
+
+package "Interpretability" {
+  class FeatureAttribution
+  class CellAttributionMap
+  class SpatialAttributionMap
+  class InterpretationResult
+  abstract class AbstractModelInterpreter
+  class EfficientNetInterpreter
+  class GNNInterpreter
+  class InterpretationService
+}
+
+package "Registry & Orchestration" {
+  class ModelPresetRegistry
+}
+
+package "Models" {
+  class EfficientNetExpertAdapter
+  class SpatialGNNAdapter
+}
+
+AbstractModelInterpreter <|-- EfficientNetInterpreter
+AbstractModelInterpreter <|-- GNNInterpreter
+InterpretationService --> ModelPresetRegistry
+InterpretationService --> EfficientNetInterpreter
+InterpretationService --> GNNInterpreter
+EfficientNetInterpreter --> EfficientNetExpertAdapter
+GNNInterpreter --> SpatialGNNAdapter
+AbstractModelInterpreter ..> InterpretationResult
+InterpretationResult *-- FeatureAttribution
+InterpretationResult *-- CellAttributionMap
+InterpretationResult *-- SpatialAttributionMap
+@enduml

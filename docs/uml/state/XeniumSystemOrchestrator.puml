@@ -1,0 +1,17 @@
+@startuml
+[*] --> Ready
+Ready --> SlideRegistration : register_and_cache_slide()
+SlideRegistration --> Ready : slide cached and persisted
+Ready --> DashboardAggregation : get_dashboard_data()
+DashboardAggregation --> Ready
+Ready --> InferenceExecution : run_inference_and_save_report()
+InferenceExecution --> ReportPersistence : create_analysis_report()
+ReportPersistence --> Ready
+Ready --> TrainingLaunch : start_background_training()
+TrainingLaunch --> JobMonitoring : get_job_status()
+JobMonitoring --> Ready : success
+JobMonitoring --> FailureHandling : failed
+FailureHandling --> Ready : retry / recovery
+Ready --> ReportInterpretation : interpret_report()
+ReportInterpretation --> Ready
+@enduml

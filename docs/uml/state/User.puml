@@ -1,0 +1,12 @@
+@startuml
+[*] --> Registered
+Registered --> Authenticated : login()
+Authenticated --> AuthorizedAdmin : role == admin
+Authenticated --> AuthorizedResearcher : role == researcher
+Authenticated --> AuthorizedClinician : role == clinician
+AuthorizedAdmin --> Authenticated : get_me() / profile refresh
+AuthorizedResearcher --> Authenticated : get_me() / profile refresh
+AuthorizedClinician --> Authenticated : get_me() / profile refresh
+Authenticated --> SessionExpired : token expired / token removed
+SessionExpired --> Authenticated : login()
+@enduml

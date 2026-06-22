@@ -1,0 +1,14 @@
+@startuml
+left to right direction
+actor Administrator
+actor Researcher
+rectangle SpatialScope {
+  usecase "Запустить фоновое обучение" as UC1
+  usecase "Настроить training ROI" as UC2
+  usecase "Отслеживать статус job" as UC3
+}
+Administrator --> UC1
+Researcher --> UC1
+UC1 .> UC2 : <<include>>
+UC1 .> UC3 : <<include>>
+@enduml

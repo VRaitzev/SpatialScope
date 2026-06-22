@@ -1,0 +1,11 @@
+@startuml
+[*] --> Defined
+Defined --> StoredInSystem : create_preset()
+StoredInSystem --> AvailableForSelection : get_available_presets()
+AvailableForSelection --> Active : set_active_preset()
+Active --> UsedForInference : run_inference_and_save_report()
+Active --> UsedForTraining : start_background_training()
+UsedForInference --> Active
+UsedForTraining --> Active
+Active --> AvailableForSelection : another preset activated
+@enduml
